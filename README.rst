@@ -18,4 +18,6 @@ specific content types using the following setting in your Django settings.
     }
 
 The key for the ``CSV_ADMIN_CONTENT_FORMS`` dictionary is the natural key
-returned by the content type you've associated with your CSV data file.
+returned by the content type you've associated with your CSV data file. The
+value for each key is a Python path string for the form by which your data will
+be validated.
