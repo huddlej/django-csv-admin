@@ -1,0 +1,5 @@
+div.spreadsheet {
+    max-height: 600px;
+    max-width: 1200px;
+    overflow: auto;
+}
