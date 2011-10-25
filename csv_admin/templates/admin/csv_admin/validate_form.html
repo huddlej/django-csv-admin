@@ -1,0 +1,23 @@
+{% extends "admin/change_form.html" %}
+
+{% block content %}
+<div class="spreadsheet">
+<table>
+    <tr>
+    {% for field in csv_forms.0 %}
+        <th>{{ field.label }}</th>
+    {% endfor %}
+    </tr>
+    {% for form in csv_forms %}
+        <tr>
+        {% for field in form %}
+            <td>
+                {{ field }}
+            </td>
+        {% endfor %}
+        </tr>
+    {% endfor %}
+</table>
+</div>
+<p><input type="submit" name="validate" value="Validate" /></p>
+{% endblock %}

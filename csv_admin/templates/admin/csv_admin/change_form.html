@@ -1,5 +1,5 @@
 {% extends "admin/change_form.html" %}
 
-{% block form_top %}
-<div>{{ csv_form.as_p }}</div>
+{% block after_field_sets %}
+<div><p><a href="validate/">Validate</a></p></div>
 {% endblock %}
