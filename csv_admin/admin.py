@@ -29,35 +29,41 @@ class CsvFileAdmin(admin.ModelAdmin):
             context.update(extra_context)
 
         instance = self.get_object(request, object_id)
+        content_type_key = instance.content_type.natural_key()
         context["instance"] = instance
         context["app_label"] = instance._meta.app_label
         context["opts"] = instance._meta
 
-        if hasattr(settings, "CSV_ADMIN_CONTENT_FORMS"):
-            content_type = instance.content_type
-            form_path = settings.CSV_ADMIN_CONTENT_FORMS.get(content_type.natural_key())
-            if form_path:
-                form_class = get_callable(form_path)
-                reader = csv.DictReader(instance.csv)
+        if (hasattr(settings, "CSV_ADMIN_CONTENT_FORMS") and
+            content_type_key in settings.CSV_ADMIN_CONTENT_FORMS):
+            # Look up the form path for this file's content type.
+            form_path = settings.CSV_ADMIN_CONTENT_FORMS.get(content_type_key)
+            form_class = get_callable(form_path)
+            reader = csv.DictReader(instance.csv)
 
-                forms = []
-                max_rows = 100
-                count = 0
-                all_forms_valid = True
-                for row in reader:
-                    if count == max_rows:
-                        break
+            forms = []
+            max_rows = 100
+            count = 0
+            all_forms_valid = True
+            for row in reader:
+                if count == max_rows:
+                    break
 
-                    form_instance = form_class(row)
-                    if "validate" in request.POST and form_instance.is_valid():
-                        pass
-                    else:
-                        all_forms_valid = False
+                form_instance = form_class(row)
+                if "validate" in request.POST and form_instance.is_valid():
+                    pass
+                else:
+                    all_forms_valid = False
 
-                    forms.append(form_instance)
-                    count += 1
+                forms.append(form_instance)
+                count += 1
 
-                context["csv_forms"] = forms
+            context["csv_forms"] = forms
+        else:
+            self.message_user(
+                request,
+                "Set a form for this content type in settings.py with the CSV_ADMIN_CONTENT_FORMS settings."
+            )
 
         return render_to_response("admin/csv_admin/validate_form.html",
                                   context,
