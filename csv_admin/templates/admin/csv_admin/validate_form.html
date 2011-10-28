@@ -16,6 +16,7 @@
 {% block content %}
 {% if csv_forms %}
 <div class="spreadsheet">
+<p>{{ invalid_rows }} invalid row{{ invalid_rows|pluralize }} out of {{ rows }} total.</p>
 <table>
     <tr>
     {% for field in csv_forms.0 %}
