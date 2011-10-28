@@ -42,23 +42,21 @@ class CsvFileAdmin(admin.ModelAdmin):
             reader = csv.DictReader(instance.csv)
 
             forms = []
-            max_rows = 100
-            count = 0
-            all_forms_valid = True
+            rows = 0
+            invalid_rows = 0
             for row in reader:
-                if count == max_rows:
-                    break
-
+                rows += 1
                 form_instance = form_class(row)
-                if "validate" in request.POST and form_instance.is_valid():
+                if form_instance.is_valid():
+                    # Ignore valid forms for now.
                     pass
                 else:
-                    all_forms_valid = False
-
-                forms.append(form_instance)
-                count += 1
+                    forms.append(form_instance)
+                    invalid_rows += 1
 
             context["csv_forms"] = forms
+            context["rows"] = rows
+            context["invalid_rows"] = invalid_rows
         else:
             self.message_user(
                 request,
