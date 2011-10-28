@@ -62,7 +62,8 @@ class CsvFileAdmin(admin.ModelAdmin):
         else:
             self.message_user(
                 request,
-                "Set a form for this content type in settings.py with the CSV_ADMIN_CONTENT_FORMS settings."
+                """Set a form for the content type "%s" in the Django
+                CSV_ADMIN_CONTENT_FORMS setting.""" % instance.content_type
             )
 
         return render_to_response("admin/csv_admin/validate_form.html",
