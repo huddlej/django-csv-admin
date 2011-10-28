@@ -1,5 +1,14 @@
 {% extends "admin/change_form.html" %}
+{% load i18n  %}
 
-{% block after_field_sets %}
-<div><p><a href="validate/">Validate</a></p></div>
+{% block object-tools %}
+{% if change %}{% if not is_popup %}
+    <ul class="object-tools">
+        <li><a href="validate/">{% trans "Validate" %}</a></li>
+        <li><a href="history/" class="historylink">{% trans "History" %}</a></li>
+        {% if has_absolute_url %}
+            <li><a href="../../../r/{{ content_type_id }}/{{ object_id }}/" class="viewsitelink">{% trans "View on site" %}</a></li>
+        {% endif%}
+    </ul>
+{% endif %}{% endif %}
 {% endblock %}
