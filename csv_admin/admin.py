@@ -64,6 +64,7 @@ class CsvFileAdmin(admin.ModelAdmin):
                 CSV_ADMIN_CONTENT_FORMS setting.""" % instance.content_type
             )
 
+        # TODO: allow the user to specify their own template.
         return render_to_response("admin/csv_admin/validate_form.html",
                                   context,
                                   context_instance=RequestContext(request))
