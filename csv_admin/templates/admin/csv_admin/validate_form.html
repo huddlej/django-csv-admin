@@ -19,15 +19,24 @@
 <p>{{ invalid_rows }} invalid row{{ invalid_rows|pluralize }} out of {{ rows }} total.</p>
 <table>
     <tr>
+        <th>Errors</th>
     {% for field in csv_forms.0 %}
         <th>{{ field.label }}</th>
     {% endfor %}
     </tr>
     {% for form in csv_forms %}
         <tr>
+            <td>
+            {% if form.non_field_errors %}
+                {{ form.non_field_errors }}
+            {% endif %}
+            </td>
         {% for field in form %}
             <td>
                 {{ field }}
+                {% if field.errors %}
+                    {{ field.errors }}
+                {% endif %}
             </td>
         {% endfor %}
         </tr>
