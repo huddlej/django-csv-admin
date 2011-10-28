@@ -30,9 +30,11 @@ class CsvFileAdmin(admin.ModelAdmin):
 
         instance = self.get_object(request, object_id)
         context["instance"] = instance
-        content_type = instance.content_type
+        context["app_label"] = instance._meta.app_label
+        context["opts"] = instance._meta
 
         if hasattr(settings, "CSV_ADMIN_CONTENT_FORMS"):
+            content_type = instance.content_type
             form_path = settings.CSV_ADMIN_CONTENT_FORMS.get(content_type.natural_key())
             if form_path:
                 form_class = get_callable(form_path)
