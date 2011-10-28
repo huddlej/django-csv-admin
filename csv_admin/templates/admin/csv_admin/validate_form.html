@@ -1,8 +1,20 @@
 {% extends "admin/change_form.html" %}
+{% load i18n %}
 
 {% block title %}Validate CSV file{% endblock %}
 
+{% block breadcrumbs %}{% if not is_popup %}
+<div class="breadcrumbs">
+     <a href="../../../../">{% trans "Home" %}</a> &rsaquo;
+     <a href="../../../">{{ app_label|capfirst|escape }}</a> &rsaquo;
+     {% if has_change_permission %}<a href="../../">{{ opts.verbose_name_plural|capfirst }}</a>{% else %}{{ opts.verbose_name_plural|capfirst }}{% endif %} &rsaquo;
+     <a href="../">{{ instance|truncatewords:"18" }}</a> &rsaquo;
+     Validate
+</div>
+{% endif %}{% endblock %}
+
 {% block content %}
+{% if csv_forms %}
 <div class="spreadsheet">
 <table>
     <tr>
@@ -22,4 +34,5 @@
 </table>
 </div>
 <p><input type="submit" name="validate" value="Validate" /></p>
+{% endif %}
 {% endblock %}
