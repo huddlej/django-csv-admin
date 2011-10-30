@@ -18,6 +18,7 @@
 <div class="spreadsheet">
 <p>{{ invalid_rows }} invalid row{{ invalid_rows|pluralize }} out of {{ rows }} total.</p>
 
+<form method="post" action="">{% csrf_token %}
 {{ formset.management_form }}
 
 {% if formset.non_form_errors %}
@@ -51,5 +52,6 @@
 </table>
 </div>
 <p><input type="submit" name="validate" value="Validate" /></p>
+</form>
 {% endif %}
 {% endblock %}
