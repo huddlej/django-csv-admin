@@ -14,17 +14,25 @@
 {% endif %}{% endblock %}
 
 {% block content %}
-{% if csv_forms %}
+{% if formset %}
 <div class="spreadsheet">
 <p>{{ invalid_rows }} invalid row{{ invalid_rows|pluralize }} out of {{ rows }} total.</p>
+
+<form method="post" action="">{% csrf_token %}
+{{ formset.management_form }}
+
+{% if formset.non_form_errors %}
+    <div class="error">{{ formset.non_form_errors }}</div>
+{% endif %}
+
 <table>
     <tr>
         <th>Errors</th>
-    {% for field in csv_forms.0 %}
+    {% for field in formset.forms.0 %}
         <th>{{ field.label }}</th>
     {% endfor %}
     </tr>
-    {% for form in csv_forms %}
+    {% for form in formset.forms %}
         <tr>
             <td>
             {% if form.non_field_errors %}
@@ -44,5 +52,6 @@
 </table>
 </div>
 <p><input type="submit" name="validate" value="Validate" /></p>
+</form>
 {% endif %}
 {% endblock %}
