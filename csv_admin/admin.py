@@ -4,6 +4,7 @@ from django.conf import settings
 from django.conf.urls.defaults import patterns
 from django.contrib import admin
 from django.core.urlresolvers import get_callable
+from django.forms.formsets import formset_factory
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 
@@ -41,7 +42,7 @@ class CsvFileAdmin(admin.ModelAdmin):
             form_class = get_callable(form_path)
             reader = csv.DictReader(instance.csv)
 
-            forms = []
+            initial_data = []
             rows = 0
             invalid_rows = 0
             for row in reader:
@@ -51,10 +52,31 @@ class CsvFileAdmin(admin.ModelAdmin):
                     # Ignore valid forms for now.
                     pass
                 else:
-                    forms.append(form_instance)
+                    initial_data.append(row)
                     invalid_rows += 1
 
-            context["csv_forms"] = forms
+            # One or more rows contain invalid data.
+            if invalid_rows > 0:
+                # Create a form class with one form for each invalid row.
+                formset_class = formset_factory(form_class, extra=0)
+
+                if request.method == "POST":
+                    formset = formset_class(request.POST, request.FILES)
+                else:
+                    formset = formset_class(initial=initial_data)
+
+                if formset.is_valid():
+                    # Save all forms.
+                    pass
+                else:
+                    # Display remaining errors.
+                    #raise Exception(formset.errors)
+                    pass
+            else:
+                # All rows are valid. Save all forms.
+                pass
+
+            context["formset"] = formset
             context["rows"] = rows
             context["invalid_rows"] = invalid_rows
         else:
