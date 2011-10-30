@@ -42,6 +42,7 @@ class CsvFileAdmin(admin.ModelAdmin):
             form_class = get_callable(form_path)
             reader = csv.DictReader(instance.csv)
 
+            valid_rows = []
             initial_data = []
             rows = 0
             invalid_rows = 0
@@ -50,12 +51,13 @@ class CsvFileAdmin(admin.ModelAdmin):
                 form_instance = form_class(row)
                 if form_instance.is_valid():
                     # Ignore valid forms for now.
-                    pass
+                    valid_rows.append(form_instance)
                 else:
                     initial_data.append(row)
                     invalid_rows += 1
 
             # One or more rows contain invalid data.
+            save_valid_rows = False
             if invalid_rows > 0:
                 # Create a form class with one form for each invalid row.
                 formset_class = formset_factory(form_class, extra=0)
@@ -66,15 +68,28 @@ class CsvFileAdmin(admin.ModelAdmin):
                     formset = formset_class(initial=initial_data)
 
                 if formset.is_valid():
-                    # Save all forms.
-                    pass
-                else:
-                    # Display remaining errors.
-                    #raise Exception(formset.errors)
-                    pass
-            else:
+                    saved_instances = []
+                    try:
+                        # Save all forms.
+                        for form in formset.forms:
+                            form.save()
+                            saved_instances.append(form.instance)
+
+                        # If all the invalid rows save properly, it's safe to
+                        # save the remaining valid rows.
+                        save_valid_rows = True
+                    except:
+                        # If something goes wrong during a save, delete
+                        # everything that has been saved up to this point to
+                        # maintain consistency in the database. In other words,
+                        # either all records get saved or none of them do.
+                        for instance in saved_instances:
+                            instance.delete()
+
+            if save_valid_rows:
                 # All rows are valid. Save all forms.
-                pass
+                for form in valid_rows:
+                    form.save()
 
             context["formset"] = formset
             context["rows"] = rows
