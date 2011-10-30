@@ -86,6 +86,9 @@ class CsvFileAdmin(admin.ModelAdmin):
                         for instance in saved_instances:
                             instance.delete()
 
+                        # TODO: let the user know what went wrong with an error
+                        # message.
+
             if save_valid_rows:
                 # All rows are valid. Save all forms.
                 for form in valid_rows:
