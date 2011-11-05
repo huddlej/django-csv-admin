@@ -1,4 +1,5 @@
 import csv
+import datetime
 
 from django.conf import settings
 from django.conf.urls.defaults import patterns
@@ -93,6 +94,11 @@ class CsvFileAdmin(admin.ModelAdmin):
                     for form in valid_rows:
                         form.save()
                         saved_instances.append(form.instance)
+
+                    # Save the time when this instance was successfully
+                    # imported.
+                    instance.imported_on = datetime.datetime.now()
+                    instance.save()
                 except Exception, e:
                     # If something goes wrong during a save, delete
                     # everything that has been saved up to this point to
