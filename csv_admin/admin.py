@@ -69,7 +69,7 @@ class CsvFileAdmin(admin.ModelAdmin):
                     invalid_rows += 1
 
             # One or more rows contain invalid data.
-            save_valid_rows = False
+            save_rows = False
             if invalid_rows > 0:
                 # Create a form class with one form for each invalid row.
                 formset_class = formset_factory(form_class, extra=0)
@@ -80,40 +80,38 @@ class CsvFileAdmin(admin.ModelAdmin):
                     formset = formset_class(initial=initial_data)
 
                 if formset.is_valid():
-                    saved_instances = []
-                    try:
-                        # Save all forms.
-                        for form in formset.forms:
-                            form.save()
-                            saved_instances.append(form.instance)
+                    valid_rows.extend(list(formset.forms))
 
-                        # If all the invalid rows save properly, it's safe to
-                        # save the remaining valid rows.
-                        save_valid_rows = True
-                    except Exception, e:
-                        # If something goes wrong during a save, delete
-                        # everything that has been saved up to this point to
-                        # maintain consistency in the database. In other words,
-                        # either all records get saved or none of them do.
-                        #
-                        # TODO: this should really be handled with a database
-                        # transaction instead of the application.
-                        for instance in saved_instances:
-                            instance.delete()
+                    # If all the invalid rows save properly, it's safe to
+                    # save the remaining valid rows.
+                    save_rows = True
 
-                        # Let the user know what went wrong with an error
-                        # message.
-                        self.message_user(
-                            request,
-                            """One or more of your records couldn't be saved.
-                            All changes have been reverted.
-                            Error message was: %s""" % e
-                        )
-
-            if save_valid_rows:
+            if save_rows:
                 # All rows are valid. Save all forms.
-                for form in valid_rows:
-                    form.save()
+                saved_instances = []
+                try:
+                    for form in valid_rows:
+                        form.save()
+                        saved_instances.append(form.instance)
+                except Exception, e:
+                    # If something goes wrong during a save, delete
+                    # everything that has been saved up to this point to
+                    # maintain consistency in the database. In other words,
+                    # either all records get saved or none of them do.
+                    #
+                    # TODO: this should really be handled with a database
+                    # transaction instead of the application.
+                    for instance in saved_instances:
+                        instance.delete()
+
+                    # Let the user know what went wrong with an error
+                    # message.
+                    self.message_user(
+                        request,
+                        """One or more of your records couldn't be saved.
+                        All changes have been reverted.
+                        Error message was: %s""" % e
+                    )
 
             context["formset"] = formset
             context["rows"] = rows
