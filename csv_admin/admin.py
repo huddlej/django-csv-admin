@@ -6,6 +6,7 @@ from django.conf.urls.defaults import patterns
 from django.contrib import admin
 from django.core.urlresolvers import get_callable
 from django.forms.formsets import formset_factory
+from django.http import HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 
@@ -99,6 +100,14 @@ class CsvFileAdmin(admin.ModelAdmin):
                     # imported.
                     instance.imported_on = datetime.datetime.now()
                     instance.save()
+
+                    # Tell the user everything was successful and redirect them
+                    # to the admin page for this instance.
+                    self.message_user(
+                        request,
+                        "Successfully imported %i records." % len(valid_rows)
+                    )
+                    return HttpResponseRedirect(instance.get_absolute_url())
                 except Exception, e:
                     # If something goes wrong during a save, delete
                     # everything that has been saved up to this point to
