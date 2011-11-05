@@ -12,7 +12,7 @@ from models import CsvFile
 
 
 class CsvFileAdmin(admin.ModelAdmin):
-    list_display = ("csv", "added_on")
+    list_display = ("csv", "added_on", "imported_on")
 
     class Meta:
         css = {"all": "csv/style.css"}
