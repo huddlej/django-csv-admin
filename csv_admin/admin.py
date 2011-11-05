@@ -90,7 +90,7 @@ class CsvFileAdmin(admin.ModelAdmin):
                         # If all the invalid rows save properly, it's safe to
                         # save the remaining valid rows.
                         save_valid_rows = True
-                    except:
+                    except Exception, e:
                         # If something goes wrong during a save, delete
                         # everything that has been saved up to this point to
                         # maintain consistency in the database. In other words,
@@ -98,8 +98,14 @@ class CsvFileAdmin(admin.ModelAdmin):
                         for instance in saved_instances:
                             instance.delete()
 
-                        # TODO: let the user know what went wrong with an error
+                        # Let the user know what went wrong with an error
                         # message.
+                        self.message_user(
+                            request,
+                            """One or more of your records couldn't be saved.
+                            All changes have been reverted.
+                            Error message was: %s""" % e
+                        )
 
             if save_valid_rows:
                 # All rows are valid. Save all forms.
