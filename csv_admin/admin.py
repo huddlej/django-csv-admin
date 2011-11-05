@@ -12,12 +12,19 @@ from models import CsvFile
 
 
 class CsvFileAdmin(admin.ModelAdmin):
+    """
+    Provides a custom view for validating CsvFile contents as form data and
+    importing the validated data with a user-defined form or formset.
+    """
     list_display = ("csv", "added_on", "imported_on")
 
     class Meta:
         css = {"all": "csv/style.css"}
 
     def get_urls(self):
+        """
+        Returns standard Django admin urls plus the custom validation view url.
+        """
         urls = super(CsvFileAdmin, self).get_urls()
         csv_urls = patterns("",
             (r'^(?P<object_id>\d+)/validate/$', self.admin_site.admin_view(self.validate_view))
@@ -25,6 +32,11 @@ class CsvFileAdmin(admin.ModelAdmin):
         return csv_urls + urls
 
     def validate_view(self, request, object_id, extra_context=None):
+        """
+        Validates the contents of a CsvFile instance's file based on the
+        associated content type and a user-defined form. The user can correct
+        invalid data before importing it all into a database.
+        """
         context = {}
         if extra_context is not None:
             context.update(extra_context)
