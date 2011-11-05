@@ -13,7 +13,7 @@ class CsvFile(models.Model):
     csv = models.FileField(upload_to="csv_admin")
     content_type = models.ForeignKey(ContentType)
     added_on = models.DateTimeField(auto_now_add=True)
-    imported_on = models.DateTimeField(blank=True, null=True)
+    imported_on = models.DateTimeField(blank=True, null=True, editable=False)
 
     def __unicode__(self):
         return self.csv.name
