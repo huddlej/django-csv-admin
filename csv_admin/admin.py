@@ -95,6 +95,9 @@ class CsvFileAdmin(admin.ModelAdmin):
                         # everything that has been saved up to this point to
                         # maintain consistency in the database. In other words,
                         # either all records get saved or none of them do.
+                        #
+                        # TODO: this should really be handled with a database
+                        # transaction instead of the application.
                         for instance in saved_instances:
                             instance.delete()
 
