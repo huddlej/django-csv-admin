@@ -74,7 +74,7 @@ class CsvFileAdmin(admin.ModelAdmin):
             save_rows = False
             if invalid_rows > 0:
                 # Create a form class with one form for each invalid row.
-                formset_class = formset_factory(form_class, extra=0)
+                formset_class = formset_factory(form_class, extra=0, can_delete=True)
 
                 if request.method == "POST":
                     formset = formset_class(request.POST, request.FILES)
@@ -82,7 +82,9 @@ class CsvFileAdmin(admin.ModelAdmin):
                     formset = formset_class(initial=initial_data)
 
                 if formset.is_valid():
-                    valid_rows.extend(list(formset.forms))
+                    # Skip all forms in marked as "deleted" by the user.
+                    valid_rows.extend([form for form in formset.forms
+                                       if form not in formset.deleted_forms])
 
                     # If all the invalid rows save properly, it's safe to
                     # save the remaining valid rows.
