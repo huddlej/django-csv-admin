@@ -15,5 +15,8 @@ class CsvFile(models.Model):
     added_on = models.DateTimeField(auto_now_add=True)
     imported_on = models.DateTimeField(blank=True, null=True, editable=False)
 
+    class Meta:
+        ordering = ("-added_on",)
+
     def __unicode__(self):
         return self.csv.name
