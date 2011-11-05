@@ -20,3 +20,7 @@ class CsvFile(models.Model):
 
     def __unicode__(self):
         return self.csv.name
+
+    @models.permalink
+    def get_absolute_url(self):
+        return ("admin:csv_admin_csvfile_change", [str(self.id)])
