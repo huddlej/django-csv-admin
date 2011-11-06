@@ -61,42 +61,38 @@ class CsvFileAdmin(admin.ModelAdmin):
             valid_forms_cache_key = "admin_%s_valid_forms" % instance.csv
             invalid_forms_cache_key = "admin_%s_invalid_forms" % instance.csv
             valid_rows = cache.get(valid_forms_cache_key)
-            initial_data = cache.get(invalid_forms_cache_key)
+            invalid_rows = cache.get(invalid_forms_cache_key)
 
             # If either cache hit failed, read in the CSV data again.
-            if valid_rows is None or initial_data is None:
+            if valid_rows is None or invalid_rows is None:
                 valid_rows = []
-                initial_data = []
-                rows = 0
-                invalid_rows = 0
+                invalid_rows = []
                 reader = csv.DictReader(instance.csv)
                 for row in reader:
-                    rows += 1
                     form_instance = form_class(row)
                     if form_instance.is_valid():
                         # Ignore valid forms for now.
                         valid_rows.append(form_instance)
                     else:
-                        initial_data.append(row)
-                        invalid_rows += 1
+                        invalid_rows.append(row)
 
                 # Save forms into cache to speed up load time during validation.
                 cache.set(valid_forms_cache_key, valid_rows)
-                cache.set(invalid_forms_cache_key, initial_data)
-            else:
-                invalid_rows = len(initial_data)
-                rows = len(valid_rows) + invalid_rows
+                cache.set(invalid_forms_cache_key, invalid_rows)
+
+            invalid_row_count = len(invalid_rows)
+            row_count = len(valid_rows) + invalid_row_count
 
             # One or more rows contain invalid data.
             save_rows = False
-            if invalid_rows > 0:
+            if invalid_row_count > 0:
                 # Create a form class with one form for each invalid row.
                 formset_class = formset_factory(form_class, extra=0, can_delete=True)
 
                 if request.method == "POST":
                     formset = formset_class(request.POST, request.FILES)
                 else:
-                    formset = formset_class(initial=initial_data)
+                    formset = formset_class(initial=invalid_rows)
 
                 if formset.is_valid():
                     # Skip all forms in marked as "deleted" by the user.
@@ -148,8 +144,8 @@ class CsvFileAdmin(admin.ModelAdmin):
                     )
 
             context["formset"] = formset
-            context["rows"] = rows
-            context["invalid_rows"] = invalid_rows
+            context["row_count"] = row_count
+            context["invalid_row_count"] = invalid_row_count
         else:
             self.message_user(
                 request,

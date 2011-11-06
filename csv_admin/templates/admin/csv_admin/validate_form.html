@@ -16,7 +16,7 @@
 {% block content %}
 {% if formset %}
 <div class="spreadsheet">
-<p>{{ invalid_rows }} invalid row{{ invalid_rows|pluralize }} out of {{ rows }} total.</p>
+<p>{{ invalid_row_count }} invalid row{{ invalid_row_count|pluralize }} out of {{ row_count }} total.</p>
 
 <form method="post" action="">{% csrf_token %}
 {{ formset.management_form }}
