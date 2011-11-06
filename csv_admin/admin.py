@@ -4,6 +4,7 @@ import datetime
 from django.conf import settings
 from django.conf.urls.defaults import patterns
 from django.contrib import admin
+from django.core.cache import cache
 from django.core.urlresolvers import get_callable
 from django.forms.formsets import formset_factory
 from django.http import HttpResponseRedirect
@@ -55,21 +56,36 @@ class CsvFileAdmin(admin.ModelAdmin):
             # Look up the form path for this file's content type.
             form_path = settings.CSV_ADMIN_CONTENT_FORMS.get(content_type_key)
             form_class = get_callable(form_path)
-            reader = csv.DictReader(instance.csv)
 
-            valid_rows = []
-            initial_data = []
-            rows = 0
-            invalid_rows = 0
-            for row in reader:
-                rows += 1
-                form_instance = form_class(row)
-                if form_instance.is_valid():
-                    # Ignore valid forms for now.
-                    valid_rows.append(form_instance)
-                else:
-                    initial_data.append(row)
-                    invalid_rows += 1
+            # Check the cache first.
+            valid_forms_cache_key = "admin_%s_valid_forms" % instance.csv
+            invalid_forms_cache_key = "admin_%s_invalid_forms" % instance.csv
+            valid_rows = cache.get(valid_forms_cache_key)
+            initial_data = cache.get(invalid_forms_cache_key)
+
+            # If either cache hit failed, read in the CSV data again.
+            if valid_rows is None or initial_data is None:
+                valid_rows = []
+                initial_data = []
+                rows = 0
+                invalid_rows = 0
+                reader = csv.DictReader(instance.csv)
+                for row in reader:
+                    rows += 1
+                    form_instance = form_class(row)
+                    if form_instance.is_valid():
+                        # Ignore valid forms for now.
+                        valid_rows.append(form_instance)
+                    else:
+                        initial_data.append(row)
+                        invalid_rows += 1
+
+                # Save forms into cache to speed up load time during validation.
+                cache.set(valid_forms_cache_key, valid_rows)
+                cache.set(invalid_forms_cache_key, initial_data)
+            else:
+                invalid_rows = len(initial_data)
+                rows = len(valid_rows) + invalid_rows
 
             # One or more rows contain invalid data.
             save_rows = False
