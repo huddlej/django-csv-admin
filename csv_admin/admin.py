@@ -6,6 +6,7 @@ from django.conf.urls.defaults import patterns
 from django.contrib import admin
 from django.core.cache import cache
 from django.core.urlresolvers import get_callable
+from django.db import transaction
 from django.forms.formsets import formset_factory
 from django.http import HttpResponseRedirect
 from django.shortcuts import render_to_response
@@ -35,6 +36,7 @@ class CsvFileAdmin(admin.ModelAdmin):
         )
         return csv_urls + urls
 
+    @transaction.commit_on_success
     def _save_forms(self, forms):
         """
         Saves each form in the given iterable of forms.
@@ -53,8 +55,9 @@ class CsvFileAdmin(admin.ModelAdmin):
             # been saved up to this point to maintain consistency in the
             # database. In other words, either all records get saved or none of
             # them do.
-            for instance in saved_instances:
-                instance.delete()
+            if not getattr(settings, "CSV_ADMIN_USE_TRANSACTIONS", False):
+                for instance in saved_instances:
+                    instance.delete()
 
             # Reraise exception for calling method.
             raise
