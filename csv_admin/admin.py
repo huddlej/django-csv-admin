@@ -19,6 +19,7 @@ class CsvFileAdmin(admin.ModelAdmin):
     importing the validated data with a user-defined form or formset.
     """
     list_display = ("csv", "added_on", "imported_on")
+    readonly_fields = ("imported_on",)
 
     class Meta:
         css = {"all": "csv/style.css"}
