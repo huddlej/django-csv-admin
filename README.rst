@@ -28,3 +28,13 @@ Defining forms
 Forms for CSV data validation must be instances of the Django ``Form`` class and
 implement a ``save()`` method that stores the resulting database object in the
 ``instance`` attribute.
+
+Other settings
+--------------
+
+``CSV_ADMIN_USE_TRANSACTIONS``
+    [default: ``False``] Indicates whether you want saves to occur within a
+    transaction or not. If your database supports transactions, set this to
+    ``True``. If this setting is ``False`` and an error occurs during a save,
+    the application will try to clean up any previously saved records from that
+    request to maintain a consistent database state.
