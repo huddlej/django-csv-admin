@@ -35,6 +35,30 @@ class CsvFileAdmin(admin.ModelAdmin):
         )
         return csv_urls + urls
 
+    def _save_forms(self, forms):
+        """
+        Saves each form in the given iterable of forms.
+
+        Cleans up after itself if an exception is raised and then reraises the
+        exception.
+        """
+        # All rows are valid. Save all forms.
+        saved_instances = []
+        try:
+            for form in forms:
+                form.save()
+                saved_instances.append(form.instance)
+        except Exception, e:
+            # If something goes wrong during a save, delete everything that has
+            # been saved up to this point to maintain consistency in the
+            # database. In other words, either all records get saved or none of
+            # them do.
+            for instance in saved_instances:
+                instance.delete()
+
+            # Reraise exception for calling method.
+            raise
+
     def validate_view(self, request, object_id, extra_context=None):
         """
         Validates the contents of a CsvFile instance's file based on the
@@ -104,12 +128,8 @@ class CsvFileAdmin(admin.ModelAdmin):
                     save_rows = True
 
             if save_rows:
-                # All rows are valid. Save all forms.
-                saved_instances = []
                 try:
-                    for form in valid_rows:
-                        form.save()
-                        saved_instances.append(form.instance)
+                    self._save_forms(valid_rows)
 
                     # Save the time when this instance was successfully
                     # imported.
@@ -124,18 +144,7 @@ class CsvFileAdmin(admin.ModelAdmin):
                     )
                     return HttpResponseRedirect(instance.get_absolute_url())
                 except Exception, e:
-                    # If something goes wrong during a save, delete
-                    # everything that has been saved up to this point to
-                    # maintain consistency in the database. In other words,
-                    # either all records get saved or none of them do.
-                    #
-                    # TODO: this should really be handled with a database
-                    # transaction instead of the application.
-                    for instance in saved_instances:
-                        instance.delete()
-
-                    # Let the user know what went wrong with an error
-                    # message.
+                    # Let the user know what went wrong with an error message.
                     self.message_user(
                         request,
                         """One or more of your records couldn't be saved.
