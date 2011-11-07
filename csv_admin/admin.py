@@ -110,8 +110,9 @@ class CsvFileAdmin(admin.ModelAdmin):
             invalid_row_count = len(invalid_rows)
             row_count = len(valid_rows) + invalid_row_count
 
-            # One or more rows contain invalid data.
-            save_rows = False
+            # If at least one row contains invalid data, create a formset to
+            # allow the user to correct the invalid fields.
+            save_rows = True
             if invalid_row_count > 0:
                 # Create a form class with one form for each invalid row.
                 formset_class = formset_factory(form_class, extra=0, can_delete=True)
@@ -121,14 +122,16 @@ class CsvFileAdmin(admin.ModelAdmin):
                 else:
                     formset = formset_class(initial=invalid_rows)
 
+                context["formset"] = formset
+
                 if formset.is_valid():
                     # Skip all forms in marked as "deleted" by the user.
                     valid_rows.extend([form for form in formset.forms
                                        if form not in formset.deleted_forms])
-
-                    # If all the invalid rows save properly, it's safe to
-                    # save the remaining valid rows.
-                    save_rows = True
+                else:
+                    # If any of the invalid rows still don't validate, don't try
+                    # to save yet.
+                    save_rows = False
 
             if save_rows:
                 try:
@@ -155,7 +158,6 @@ class CsvFileAdmin(admin.ModelAdmin):
                         Error message was: %s""" % e
                     )
 
-            context["formset"] = formset
             context["row_count"] = row_count
             context["invalid_row_count"] = invalid_row_count
         else:
