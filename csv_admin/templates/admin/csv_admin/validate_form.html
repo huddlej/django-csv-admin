@@ -29,7 +29,9 @@
     <tr>
         <th>Errors</th>
     {% for field in formset.forms.0 %}
-        <th>{{ field.label }}</th>
+        {% if not field.is_hidden %}
+            <th>{{ field.label }}</th>
+        {% endif %}
     {% endfor %}
     </tr>
     {% for form in formset.forms %}
@@ -40,12 +42,14 @@
             {% endif %}
             </td>
         {% for field in form %}
-            <td>
-                {{ field }}
-                {% if field.errors %}
-                    {{ field.errors }}
-                {% endif %}
-            </td>
+            {% if not field.is_hidden %}
+                <td>
+                    {{ field }}
+                    {% if field.errors %}
+                        {{ field.errors }}
+                    {% endif %}
+                </td>
+            {% endif %}
         {% endfor %}
         </tr>
     {% endfor %}
