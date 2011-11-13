@@ -19,7 +19,8 @@ class CsvFile(models.Model):
         operator.or_,
         (Q(app_label=app_label, model=model)
          for app_label, model
-         in getattr(settings, "CSV_ADMIN_CONTENT_FORMS", {}).keys())
+         in getattr(settings, "CSV_ADMIN_CONTENT_FORMS", {}).keys()),
+        Q(app_label=None)
     )
     csv = models.FileField(upload_to="csv_admin", help_text="CSV file to be imported")
     content_type = models.ForeignKey(
