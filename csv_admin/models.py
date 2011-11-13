@@ -1,5 +1,7 @@
+from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
+import operator
 
 
 class CsvFile(models.Model):
@@ -10,8 +12,20 @@ class CsvFile(models.Model):
     admin form for that content type. Forms validate CSV data and import the
     validated data into Django models.
     """
-    csv = models.FileField(upload_to="csv_admin")
-    content_type = models.ForeignKey(ContentType)
+    # Create a Q instance by ORing together Q instances for each content type
+    # with a form defined in Django settings.
+    content_type_choices = reduce(
+        operator.or_,
+        (models.Q(app_label=app_label, model=model)
+         for app_label, model
+         in getattr(settings, "CSV_ADMIN_CONTENT_FORMS", {}).keys())
+    )
+    csv = models.FileField(upload_to="csv_admin", help_text="CSV file to be imported")
+    content_type = models.ForeignKey(
+        ContentType,
+        limit_choices_to=content_type_choices,
+        help_text="Content types with CSV admin forms defined in Django's admin settings"
+    )
     added_on = models.DateTimeField(auto_now_add=True)
     imported_on = models.DateTimeField(blank=True, null=True, editable=False)
 
