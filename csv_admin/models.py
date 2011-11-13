@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
+from django.db.models import Q
 import operator
 
 
@@ -16,7 +17,7 @@ class CsvFile(models.Model):
     # with a form defined in Django settings.
     content_type_choices = reduce(
         operator.or_,
-        (models.Q(app_label=app_label, model=model)
+        (Q(app_label=app_label, model=model)
          for app_label, model
          in getattr(settings, "CSV_ADMIN_CONTENT_FORMS", {}).keys())
     )
