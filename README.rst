@@ -5,7 +5,7 @@ The simplest possible tool for uploading, validating, editing, and importing CSV
 data into Django models.
 
 Configuring forms for CSV data
----------------------------
+------------------------------
 
 CSV data are treated as form data. As such, they need to be validated before
 they can be imported into Django models. Define forms to validate your data for
@@ -29,8 +29,15 @@ Forms for CSV data validation must be instances of the Django ``Form`` class and
 implement a ``save()`` method that stores the resulting database object in the
 ``instance`` attribute.
 
-Other settings
+Settings
 --------------
+
+``CSV_ADMIN_CONTENT_FORMS``
+    [type: dictionary] Maps content types to form classes that can be used to
+    import CSV data associated with those types. Each key is a natural key for
+    the ``ContentType`` model (i.e., an app_label and model tuple). Each value
+    is a Python path string to a ``Form`` class or subclass.
+
 
 ``CSV_ADMIN_USE_TRANSACTIONS``
     [default: ``False``] Indicates whether you want saves to occur within a
