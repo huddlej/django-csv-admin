@@ -18,6 +18,12 @@
 <div class="spreadsheet">
 <p>{{ invalid_row_count }} invalid row{{ invalid_row_count|pluralize }} out of {{ row_count }} total.</p>
 
+{% if too_many_rows %}
+    <ul class="errorlist">
+        <li>Too many rows had errors. Showing the first {{ max_invalid_forms }} forms.</li>
+    </ul>
+{% endif %}
+
 <form method="post" action="">{% csrf_token %}
 {{ formset.management_form }}
 

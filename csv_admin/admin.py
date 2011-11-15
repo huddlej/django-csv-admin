@@ -20,6 +20,7 @@ class CsvFileAdmin(admin.ModelAdmin):
     Provides a custom view for validating CsvFile contents as form data and
     importing the validated data with a user-defined form or formset.
     """
+    MAX_INVALID_FORMS = 100
     list_display = ("csv", "added_on", "imported_on")
     readonly_fields = ("imported_on",)
 
@@ -91,6 +92,7 @@ class CsvFileAdmin(admin.ModelAdmin):
             invalid_rows = cache.get(invalid_forms_cache_key)
 
             # If either cache hit failed, read in the CSV data again.
+            too_many_rows = False
             if valid_rows is None or invalid_rows is None:
                 valid_rows = []
                 invalid_rows = []
@@ -103,9 +105,16 @@ class CsvFileAdmin(admin.ModelAdmin):
                     else:
                         invalid_rows.append(row)
 
-                # Save forms into cache to speed up load time during validation.
-                cache.set(valid_forms_cache_key, valid_rows)
-                cache.set(invalid_forms_cache_key, invalid_rows)
+                    if len(invalid_rows) + 1 > self.MAX_INVALID_FORMS:
+                        too_many_rows = True
+                        break
+
+                # Only cache when we haven't loaded too many invalid rows.
+                if not too_many_rows:
+                    # Save forms into cache to speed up load time during
+                    # validation.
+                    cache.set(valid_forms_cache_key, valid_rows)
+                    cache.set(invalid_forms_cache_key, invalid_rows)
 
             invalid_row_count = len(invalid_rows)
             row_count = len(valid_rows) + invalid_row_count
@@ -124,7 +133,7 @@ class CsvFileAdmin(admin.ModelAdmin):
 
                 context["formset"] = formset
 
-                if formset.is_valid():
+                if formset.is_valid() and not too_many_rows:
                     # Skip all forms in marked as "deleted" by the user.
                     valid_rows.extend([form for form in formset.forms
                                        if form not in formset.deleted_forms])
@@ -160,6 +169,8 @@ class CsvFileAdmin(admin.ModelAdmin):
 
             context["row_count"] = row_count
             context["invalid_row_count"] = invalid_row_count
+            context["max_invalid_forms"] = self.MAX_INVALID_FORMS
+            context["too_many_rows"] = too_many_rows
         else:
             self.message_user(
                 request,
