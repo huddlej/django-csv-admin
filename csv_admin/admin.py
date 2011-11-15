@@ -79,8 +79,7 @@ class CsvFileAdmin(admin.ModelAdmin):
         context["app_label"] = instance._meta.app_label
         context["opts"] = instance._meta
 
-        if (not hasattr(settings, "CSV_ADMIN_CONTENT_FORMS") or
-            content_type_key not in settings.CSV_ADMIN_CONTENT_FORMS):
+        if content_type_key not in getattr(settings, "CSV_ADMIN_CONTENT_FORMS", {}):
             self.message_user(
                 request,
                 """Set a form for the content type "%s" in the Django
