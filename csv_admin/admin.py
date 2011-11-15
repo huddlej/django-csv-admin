@@ -79,104 +79,103 @@ class CsvFileAdmin(admin.ModelAdmin):
         context["app_label"] = instance._meta.app_label
         context["opts"] = instance._meta
 
-        if (hasattr(settings, "CSV_ADMIN_CONTENT_FORMS") and
-            content_type_key in settings.CSV_ADMIN_CONTENT_FORMS):
-            # Look up the form path for this file's content type.
-            form_path = settings.CSV_ADMIN_CONTENT_FORMS.get(content_type_key)
-            form_class = get_callable(form_path)
-
-            # Check the cache first.
-            valid_forms_cache_key = "admin_%s_valid_forms" % instance.csv
-            invalid_forms_cache_key = "admin_%s_invalid_forms" % instance.csv
-            valid_rows = cache.get(valid_forms_cache_key)
-            invalid_rows = cache.get(invalid_forms_cache_key)
-
-            # If either cache hit failed, read in the CSV data again.
-            too_many_rows = False
-            if valid_rows is None or invalid_rows is None:
-                valid_rows = []
-                invalid_rows = []
-                reader = csv.DictReader(instance.csv)
-                for row in reader:
-                    form_instance = form_class(row)
-                    if form_instance.is_valid():
-                        # Ignore valid forms for now.
-                        valid_rows.append(form_instance)
-                    else:
-                        invalid_rows.append(row)
-
-                    if len(invalid_rows) + 1 > self.MAX_INVALID_FORMS:
-                        too_many_rows = True
-                        break
-
-                # Only cache when we haven't loaded too many invalid rows.
-                if not too_many_rows:
-                    # Save forms into cache to speed up load time during
-                    # validation.
-                    cache.set(valid_forms_cache_key, valid_rows)
-                    cache.set(invalid_forms_cache_key, invalid_rows)
-
-            invalid_row_count = len(invalid_rows)
-            row_count = len(valid_rows) + invalid_row_count
-
-            # If at least one row contains invalid data, create a formset to
-            # allow the user to correct the invalid fields.
-            save_rows = True
-            if invalid_row_count > 0:
-                # Create a form class with one form for each invalid row.
-                formset_class = formset_factory(form_class, extra=0, can_delete=True)
-
-                if request.method == "POST":
-                    formset = formset_class(request.POST, request.FILES)
-                else:
-                    formset = formset_class(initial=invalid_rows)
-
-                context["formset"] = formset
-
-                if formset.is_valid() and not too_many_rows:
-                    # Skip all forms in marked as "deleted" by the user.
-                    valid_rows.extend([form for form in formset.forms
-                                       if form not in formset.deleted_forms])
-                else:
-                    # If any of the invalid rows still don't validate, don't try
-                    # to save yet.
-                    save_rows = False
-
-            if save_rows:
-                try:
-                    self._save_forms(valid_rows)
-
-                    # Save the time when this instance was successfully
-                    # imported.
-                    instance.imported_on = datetime.datetime.now()
-                    instance.save()
-
-                    # Tell the user everything was successful and redirect them
-                    # to the admin page for this instance.
-                    self.message_user(
-                        request,
-                        "Successfully imported %i records." % len(valid_rows)
-                    )
-                    return HttpResponseRedirect(instance.get_absolute_url())
-                except Exception, e:
-                    # Let the user know what went wrong with an error message.
-                    self.message_user(
-                        request,
-                        """One or more of your records couldn't be saved.
-                        All changes have been reverted.
-                        Error message was: %s""" % e
-                    )
-
-            context["row_count"] = row_count
-            context["invalid_row_count"] = invalid_row_count
-            context["max_invalid_forms"] = self.MAX_INVALID_FORMS
-            context["too_many_rows"] = too_many_rows
-        else:
+        if (not hasattr(settings, "CSV_ADMIN_CONTENT_FORMS") or
+            content_type_key not in settings.CSV_ADMIN_CONTENT_FORMS):
             self.message_user(
                 request,
                 """Set a form for the content type "%s" in the Django
                 CSV_ADMIN_CONTENT_FORMS setting.""" % instance.content_type
             )
+            return HttpResponseRedirect(instance.get_absolute_url())
+
+        # Look up the form path for this file's content type.
+        form_path = settings.CSV_ADMIN_CONTENT_FORMS.get(content_type_key)
+        form_class = get_callable(form_path)
+
+        # Check the cache first.
+        valid_forms_cache_key = "admin_%s_valid_forms" % instance.csv
+        invalid_forms_cache_key = "admin_%s_invalid_forms" % instance.csv
+        valid_rows = cache.get(valid_forms_cache_key)
+        invalid_rows = cache.get(invalid_forms_cache_key)
+
+        # If either cache hit failed, read in the CSV data again.
+        too_many_rows = False
+        if valid_rows is None or invalid_rows is None:
+            valid_rows = []
+            invalid_rows = []
+            reader = csv.DictReader(instance.csv)
+            for row in reader:
+                form_instance = form_class(row)
+                if form_instance.is_valid():
+                    # Ignore valid forms for now.
+                    valid_rows.append(form_instance)
+                else:
+                    invalid_rows.append(row)
+
+                if len(invalid_rows) + 1 > self.MAX_INVALID_FORMS:
+                    too_many_rows = True
+                    break
+
+            # Only cache when we haven't loaded too many invalid rows.
+            if not too_many_rows:
+                # Save forms into cache to speed up load time during validation.
+                cache.set(valid_forms_cache_key, valid_rows)
+                cache.set(invalid_forms_cache_key, invalid_rows)
+
+        invalid_row_count = len(invalid_rows)
+        row_count = len(valid_rows) + invalid_row_count
+
+        # If at least one row contains invalid data, create a formset to allow
+        # the user to correct the invalid fields.
+        save_rows = True
+        if invalid_row_count > 0:
+            # Create a form class with one form for each invalid row.
+            formset_class = formset_factory(form_class, extra=0, can_delete=True)
+
+            if request.method == "POST":
+                formset = formset_class(request.POST, request.FILES)
+            else:
+                formset = formset_class(initial=invalid_rows)
+
+            context["formset"] = formset
+
+            if formset.is_valid() and not too_many_rows:
+                # Skip all forms in marked as "deleted" by the user.
+                valid_rows.extend([form for form in formset.forms
+                                   if form not in formset.deleted_forms])
+            else:
+                # If any of the invalid rows still don't validate, don't try to
+                # save yet.
+                save_rows = False
+
+        if save_rows:
+            try:
+                self._save_forms(valid_rows)
+
+                # Save the time when this instance was successfully imported.
+                instance.imported_on = datetime.datetime.now()
+                instance.save()
+
+                # Tell the user everything was successful and redirect them to
+                # the admin page for this instance.
+                self.message_user(
+                    request,
+                    "Successfully imported %i records." % len(valid_rows)
+                )
+                return HttpResponseRedirect(instance.get_absolute_url())
+            except Exception, e:
+                # Let the user know what went wrong with an error message.
+                self.message_user(
+                    request,
+                    """One or more of your records couldn't be saved.
+                    All changes have been reverted.
+                    Error message was: %s""" % e
+                )
+
+        context["row_count"] = row_count
+        context["invalid_row_count"] = invalid_row_count
+        context["max_invalid_forms"] = self.MAX_INVALID_FORMS
+        context["too_many_rows"] = too_many_rows
 
         # TODO: allow the user to specify their own template.
         return render_to_response("admin/csv_admin/validate_form.html",
