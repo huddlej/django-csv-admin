@@ -20,7 +20,7 @@ class CsvFileAdmin(admin.ModelAdmin):
     Provides a custom view for validating CsvFile contents as form data and
     importing the validated data with a user-defined form or formset.
     """
-    MAX_INVALID_FORMS = 100
+    MAX_INVALID_FORMS = 50
     list_display = ("csv", "added_on", "imported_on")
     readonly_fields = ("imported_on",)
 
