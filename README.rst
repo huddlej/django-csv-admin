@@ -38,6 +38,11 @@ Settings
     the ``ContentType`` model (i.e., an app_label and model tuple). Each value
     is a Python path string to a ``Form`` class or subclass.
 
+``CSV_ADMIN_TEMPLATE``
+    [default: "admin/csv_admin/validate_form.html"] Path to a template for the
+    validation view. The context includes ``formset``, ``invalid_row_count``,
+    ``row_count``, ``too_many_rows``, ``max_invalid_forms``, ``instance``, and
+    ``opts``. The default template subclasses Django admin's "change_form.html".
 
 ``CSV_ADMIN_USE_TRANSACTIONS``
     [default: ``False``] Indicates whether you want saves to occur within a
