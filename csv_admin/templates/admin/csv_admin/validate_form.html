@@ -32,33 +32,35 @@
 {% endif %}
 
 <table>
-    <tr>
-        <th>Errors</th>
-    {% for field in formset.forms.0 %}
-        {% if not field.is_hidden %}
-            <th>{{ field.label }}</th>
-        {% endif %}
-    {% endfor %}
-    </tr>
-    {% for form in formset.forms %}
+{% for form in formset.forms %}
+    {% if forloop.first %}
         <tr>
-            <td>
-            {% if form.non_field_errors %}
-                {{ form.non_field_errors }}
-            {% endif %}
-            </td>
-        {% for field in form %}
-            {% if not field.is_hidden %}
-                <td>
-                    {{ field }}
-                    {% if field.errors %}
-                        {{ field.errors }}
-                    {% endif %}
-                </td>
-            {% endif %}
+            <th>Errors</th>
+        {% for field in form.visible_fields %}
+            <th>{{ field.label }}</th>
         {% endfor %}
         </tr>
+    {% endif %}
+    <tr>
+        <td>
+        {% if form.non_field_errors %}
+            {{ form.non_field_errors }}
+        {% endif %}
+
+        {% for field in form.hidden_fields %}
+            {{ field }}
+        {% endfor %}
+        </td>
+    {% for field in form.visible_fields %}
+        <td>
+            {{ field }}
+            {% if field.errors %}
+                {{ field.errors }}
+            {% endif %}
+        </td>
     {% endfor %}
+    </tr>
+{% endfor %}
 </table>
 </div>
 <p><input type="submit" name="validate" value="Validate" /></p>
