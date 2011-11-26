@@ -177,7 +177,7 @@ class CsvFileAdmin(admin.ModelAdmin):
         context["too_many_rows"] = too_many_rows
 
         # TODO: allow the user to specify their own template.
-        return render_to_response("admin/csv_admin/validate_form.html",
+        return render_to_response(settings.CSV_ADMIN_TEMPLATE,
                                   context,
                                   context_instance=RequestContext(request))
 
